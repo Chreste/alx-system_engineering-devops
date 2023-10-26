@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # displays Best School 10 times.
 
-x=0
-while [ $x -lt 10 ]
+x=10
+until [ $x -lt 1 ]
 do
 	echo "Best School"
-	let x=x+1
+	let x-=1
 done
