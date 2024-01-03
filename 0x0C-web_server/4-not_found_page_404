@@ -1,38 +1,54 @@
 #!/usr/bin/env bash
-# Configure Nginx server to give error 404 page
-sudo apt-get update
-sudo apt-get -y install nginx
-ufw allow 'Nginx HTTP'
-chmod -R 755 /var/www
-echo 'Hello World' > /var/www/html/index.html
+# Configure your Nginx server so that /redirect_me is redirecting to another page.
+# Handle 404 errors
 
-new_config=\
-"server {
-        listen 80 default_server;
-        listen [::]:80 default_server;
-               root /var/www/html;
-        index index.html index.htm index.nginx-debian.html;
-        server_name _;
-        location / {
-                try_files \$uri \$uri/ =404;
+# Update and Install nginx
+sudo apt -y update
+sudo apt -y install nginx
+
+# Remove and replace /var/www to store static content
+# Created /var/www/school/errors to store 404 error message
+
+rm -rf school
+mkdir school
+mkdir school/errors
+touch 404.html
+echo "Ceci n'est pas une page" > school/errors/404.html
+
+touch school/index.html
+echo "Hello World!" > school/index.html
+
+sudo rm -rf /var/www/school
+sudo mv school /var/www/
+
+# Change the default configuration of nginx
+# Add redirection for localhost/redirect_me
+# Return  404.html in case of a 404 error (page not found)
+
+touch default
+printf %s "server {
+        listen 80;
+        listen [::]:80;
+
+        root /var/www/school;
+        index index.html;
+
+        location /redirect_me {
+            return 301 https://youtube.com;
         }
+
         error_page 404 /404.html;
-        location  /404.html {
-            internal;
-        }
-
-        if (\$request_filename ~ redirect_me){
-            rewrite ^ https://www.youtube.com/@tpauldike permanent;
+        location = /404.html {
+            root /var/www/school/errors/;
         }
 }
-"
-echo "Ceci n'est pas une page" > /var/www/html/404.html
+" > default
 
-echo "$new_config" > /etc/nginx/sites-available/default
+# Remove and replace existing configurations
+sudo rm -rf /etc/nginx/sites-available/default
+sudo rm -rf /etc/nginx/sites-enabled/default
+sudo mv default /etc/nginx/sites-available/
+sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
-if [ "$(pgrep nginx)" -le 0 ];
-then
-    service nginx start
-else
-    service nginx restart
-fi;
+# Restart nginx
+sudo service nginx restart
