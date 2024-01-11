@@ -1,42 +1,23 @@
 #!/usr/bin/env bash
-# Configure my domain zone:
+# script to dig subdomain records for the domain specified
 
-domain="$1"
-subdomain="$2"
+function get_a_records(){
+    if [[ -n "$2" ]]; then
+        response="$(dig "$2.$1" | grep -i -A1 "answer section" | tail -n 1)"
+        destination="$(echo "$response" | awk '{ print $5 }')"
+        record_type="$(echo "$response" | awk '{ print $4 }')"
+        echo  "The subdomain "$2" is a "$record_type" record and points to "$destination""
 
-get_subdomain_record() {
-    local domain="$1"
-    local subdomain="$2"
-
-    # Retrieve DNS records for the subdomain
-    # You may need to replace this with the actual command or API call depending on your DNS provider
-    # In this example, we use the 'host' command which may not be installed on your system by default
-    host "$subdomain.$domain" | awk '/has address/ {print $NF}'
-}
-
-display_subdomain_info() {
-    local domain="$1"
-    local subdomain="$2"
-
-    # Get the subdomain's IP address
-    ip_address=$(get_subdomain_record "$domain" "$subdomain")
-
-    # Check if the IP address is valid
-    if [[ $ip_address =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-        echo "The subdomain $subdomain is an A record and points to $ip_address"
     else
-        echo "Error: The subdomain $subdomain does not have a valid A record"
-    fi
-}
+        subdomains=(www lb-01 web-01 web-02)
+        for sub_d in "${subdomains[@]}"; do
+            response="$(dig "$sub_d.$1" | grep -i -A1 "answer section" | tail -n 1)"
+            destination="$(echo ""$response"" | awk '{ print $5 }')"
+            record_type="$(echo """$response""" | awk '{ print $4 }')"
+            echo "The subdomain ""$sub_d"" is a ""$record_type"" record and points to ""$destination"""
 
-# Check if a subdomain was specified
-if [[ -z $subdomain ]]; then
-    # If no subdomain was specified, display information for the default subdomains
-    display_subdomain_info "$domain" www
-    display_subdomain_info "$domain" lb-01
-    display_subdomain_info "$domain" web-01
-    display_subdomain_info "$domain" web-02
-else
-    # If a subdomain was specified, display information for that subdomain
-    display_subdomain_info "$domain" "$subdomain"
-fi
+        done
+    fi
+ 
+}
+get_a_records "$1" "$2";
