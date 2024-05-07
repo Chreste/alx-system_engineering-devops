@@ -1,6 +1,6 @@
 #!/usr/bin/python3
-
 """ raddit api"""
+
 
 def count_words(subreddit, word_list, word_count={}, after=None):
     """Queries the Reddit API and returns the count of words in
